@@ -111,6 +111,3 @@ Frontend API URL is correct
 npm run dev       # Run frontend
 node server/app.js # Run backend
 
-👨‍💻 Author
-Waqas Mehmood
-Full Stack Developer
