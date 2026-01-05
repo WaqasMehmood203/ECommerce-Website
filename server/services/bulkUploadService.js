@@ -55,25 +55,20 @@ function computeBatchStatus(successCount, errorCount) {
 
 // Create products + items for valid rows, error items for invalid
 async function createBatchWithItems(tx, batchId, validRows, errorRows) {
-  const uniqueCategoryIds = [...new Set(validRows.map((r) => r.categoryId))];
-
-  // Fetch categories by both ID and name (case-insensitive)
-  const categories = await tx.category.findMany({
-    where: {
-      OR: [
-        { id: { in: uniqueCategoryIds } },
-        { name: { in: uniqueCategoryIds } },
-      ],
-    },
+  // Fetch ALL categories from database for case-insensitive matching
+  const allCategories = await tx.category.findMany({
     select: { id: true, name: true },
   });
 
-  // Create a map for both ID and name lookup
+  // Create a case-insensitive lookup map
+  // Map both by UUID and by lowercase name
   const categoryMap = new Map();
-  categories.forEach((cat) => {
+  allCategories.forEach((cat) => {
     categoryMap.set(cat.id, cat.id); // UUID -> UUID
-    categoryMap.set(cat.name.toLowerCase(), cat.id); // name -> UUID
+    categoryMap.set(cat.name.toLowerCase(), cat.id); // lowercase name -> UUID
   });
+
+  console.log(`📦 Loaded ${allCategories.length} categories for matching`);
 
   // Get default merchant (first one) for bulk uploads
   const defaultMerchant = await tx.merchant.findFirst({
@@ -90,10 +85,17 @@ async function createBatchWithItems(tx, batchId, validRows, errorRows) {
   let failed = 0;
 
   for (const row of validRows) {
-    // Try to resolve categoryId (could be UUID or category name)
-    const resolvedCategoryId =
-      categoryMap.get(row.categoryId) ||
-      categoryMap.get(row.categoryId.toLowerCase());
+    // Try to resolve categoryId (could be UUID or category name - case insensitive)
+    let resolvedCategoryId = null;
+
+    // First try direct UUID match
+    if (categoryMap.has(row.categoryId)) {
+      resolvedCategoryId = categoryMap.get(row.categoryId);
+    }
+    // Then try case-insensitive name match
+    else if (categoryMap.has(row.categoryId.toLowerCase())) {
+      resolvedCategoryId = categoryMap.get(row.categoryId.toLowerCase());
+    }
 
     if (!resolvedCategoryId) {
       await tx.bulk_upload_item.create({
