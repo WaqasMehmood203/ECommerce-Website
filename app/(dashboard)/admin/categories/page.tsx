@@ -8,16 +8,35 @@ import apiClient from "@/lib/api";
 
 const DashboardCategory = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // getting all categories to be displayed on the all categories page
   useEffect(() => {
-    apiClient.get("/api/categories")
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching categories from API...');
+        const res = await apiClient.get("/api/categories");
+        console.log('Categories API response status:', res.status);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch categories: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('Categories data received:', data);
         setCategories(data);
-      });
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load categories');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   return (
@@ -40,55 +59,61 @@ const DashboardCategory = () => {
           </Link>
         </div>
         <div className="xl:ml-5 w-full max-xl:mt-5 overflow-auto w-full h-[80vh]">
-          <table className="table table-md table-pin-cols">
-            {/* head */}
-            <thead>
-              <tr>
-                <th>
-                  <label>
-                    <input type="checkbox" className="checkbox" />
-                  </label>
-                </th>
-                <th>Name</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories &&
-                categories.map((category: Category) => (
-                  <tr key={nanoid()}>
-                    <th>
-                      <label>
-                        <input type="checkbox" className="checkbox" />
-                      </label>
-                    </th>
+          {loading ? (
+            <div className="text-center py-10">Loading categories...</div>
+          ) : error ? (
+            <div className="text-center py-10 text-red-500">{error}</div>
+          ) : (
+            <table className="table table-md table-pin-cols">
+              {/* head */}
+              <thead>
+                <tr>
+                  <th>
+                    <label>
+                      <input type="checkbox" className="checkbox" />
+                    </label>
+                  </th>
+                  <th>Name</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories &&
+                  categories.map((category: Category) => (
+                    <tr key={nanoid()}>
+                      <th>
+                        <label>
+                          <input type="checkbox" className="checkbox" />
+                        </label>
+                      </th>
 
-                    <td>
-                      <div>
-                        <p>{formatCategoryName(category?.name)}</p>
-                      </div>
-                    </td>
+                      <td>
+                        <div>
+                          <p>{formatCategoryName(category?.name)}</p>
+                        </div>
+                      </td>
 
-                    <th>
-                      <Link
-                        href={`/admin/categories/${category?.id}`}
-                        className="btn btn-ghost btn-xs"
-                      >
-                        details
-                      </Link>
-                    </th>
-                  </tr>
-                ))}
-            </tbody>
-            {/* foot */}
-            <tfoot>
-              <tr>
-                <th></th>
-                <th>Name</th>
-                <th></th>
-              </tr>
-            </tfoot>
-          </table>
+                      <th>
+                        <Link
+                          href={`/admin/categories/${category?.id}`}
+                          className="btn btn-ghost btn-xs"
+                        >
+                          details
+                        </Link>
+                      </th>
+                    </tr>
+                  ))}
+              </tbody>
+              {/* foot */}
+              <tfoot>
+                <tr>
+                  <th></th>
+                  <th>Name</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          )}
         </div>
       </div>
     </div>

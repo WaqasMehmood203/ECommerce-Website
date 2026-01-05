@@ -1,11 +1,49 @@
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Starting seeding...')
 
-  // 1. Create a Merchant
+  // 1. Create Admin User
+  const adminEmail = 'admin@unicart.com'
+  const adminPassword = 'Admin@123'
+
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail }
+  })
+
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash(adminPassword, 10)
+    await prisma.user.create({
+      data: {
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin'
+      }
+    })
+    console.log('✅ Admin user created')
+    console.log(`   Email: ${adminEmail}`)
+    console.log(`   Password: ${adminPassword}`)
+    console.log(`   Role: admin`)
+  } else {
+    console.log('ℹ️  Admin user already exists')
+    // Update password in case it was forgotten
+    const hashedPassword = await bcrypt.hash(adminPassword, 10)
+    await prisma.user.update({
+      where: { email: adminEmail },
+      data: {
+        password: hashedPassword,
+        role: 'admin'
+      }
+    })
+    console.log('✅ Admin user password reset')
+    console.log(`   Email: ${adminEmail}`)
+    console.log(`   Password: ${adminPassword}`)
+  }
+
+  // 2. Create a Merchant
   const merchant = await prisma.merchant.upsert({
     where: { id: 'default-merchant-id' },
     update: {},
@@ -18,7 +56,7 @@ async function main() {
   })
   console.log('✅ Merchant created/verified')
 
-  // 2. Create Categories
+  // 3. Create Categories
   const categories = [
     { id: 'cat-smartphones', name: 'Smartphones' },
     { id: 'cat-laptops', name: 'Laptops' },
@@ -35,7 +73,7 @@ async function main() {
   }
   console.log('✅ Categories created/verified')
 
-  // 3. Create Products
+  // 4. Create Products
   const products = [
     {
       title: 'iPhone 15 Pro',

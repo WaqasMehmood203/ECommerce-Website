@@ -75,6 +75,17 @@ async function createBatchWithItems(tx, batchId, validRows, errorRows) {
     categoryMap.set(cat.name.toLowerCase(), cat.id); // name -> UUID
   });
 
+  // Get default merchant (first one) for bulk uploads
+  const defaultMerchant = await tx.merchant.findFirst({
+    select: { id: true, name: true },
+  });
+
+  if (!defaultMerchant) {
+    throw new Error("No merchant found in database. Please create a merchant first.");
+  }
+
+  console.log(`✅ Using default merchant for bulk upload: ${defaultMerchant.name} (${defaultMerchant.id})`);
+
   let success = 0;
   let failed = 0;
 
@@ -115,6 +126,7 @@ async function createBatchWithItems(tx, batchId, validRows, errorRows) {
           manufacturer: row.manufacturer ?? "",
           mainImage: row.mainImage ?? "",
           categoryId: resolvedCategoryId, // Use resolved category ID
+          merchantId: defaultMerchant.id, // ✅ Add required merchantId
           inStock: row.inStock,
         },
       });
@@ -137,6 +149,7 @@ async function createBatchWithItems(tx, batchId, validRows, errorRows) {
       });
       success++;
     } catch (e) {
+      console.error(`Error creating product for row:`, row.title, e.message);
       await tx.bulk_upload_item.create({
         data: {
           batchId,

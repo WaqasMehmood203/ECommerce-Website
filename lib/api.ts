@@ -4,12 +4,9 @@ export const apiClient = {
   baseUrl: config.apiBaseUrl,
 
   async request(endpoint: string, options: RequestInit = {}) {
-    // Determine if we are running in the browser
-    const isBrowser = typeof window !== 'undefined';
-
-    // Use relative URL in browser to avoid hostname/port issues
-    // Use absolute URL on server (RSCs) as fetch requires it
-    const url = isBrowser ? endpoint : `${this.baseUrl}${endpoint}`;
+    // Always use the backend API URL (port 3001), even in browser
+    // The environment variable NEXT_PUBLIC_API_BASE_URL should be set to http://localhost:3001
+    const url = `${this.baseUrl}${endpoint}`;
 
     const defaultOptions: RequestInit = {
       headers: {

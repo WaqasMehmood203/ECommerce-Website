@@ -13,15 +13,34 @@ async function searchProducts(request, response) {
                 OR: [
                     {
                         title: {
-                            contains: query
+                            contains: query,
+                            mode: 'insensitive' // Case-insensitive search
                         }
                     },
                     {
                         description: {
-                            contains: query
+                            contains: query,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        manufacturer: {
+                            contains: query,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        category: {
+                            name: {
+                                contains: query,
+                                mode: 'insensitive'
+                            }
                         }
                     }
                 ]
+            },
+            include: {
+                category: true // Include category data in results
             }
         });
 

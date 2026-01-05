@@ -99,45 +99,64 @@ const AdminSingleOrder = () => {
         return;
       }
 
-      apiClient.put(`/api/orders/${order?.id}`, {
-        method: "PUT", // or 'PUT'
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(order),
-      })
-        .then((response) => {
-          if (response.status === 200) {
-            toast.success("Order updated successfuly");
-          } else {
-            throw Error("There was an error while updating a order");
-          }
-        })
-        .catch((error) =>
-          toast.error("There was an error while updating a order")
-        );
+      try {
+        const response = await apiClient.put(`/api/orders/${order?.id}`, order);
+
+        if (response.status === 200) {
+          toast.success("Order updated successfully");
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "There was an error while updating the order");
+        }
+      } catch (error) {
+        console.error("Error updating order:", error);
+        toast.error("There was an error while updating the order");
+      }
     } else {
       toast.error("Please fill all fields");
     }
   };
 
   const deleteOrder = async () => {
-    const requestOptions = {
-      method: "DELETE",
-    };
+    // Confirm before deleting
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      return;
+    }
 
-    apiClient.delete(
-      `/api/order-product/${order?.id}`,
-      requestOptions
-    ).then((response) => {
-      apiClient.delete(
-        `/api/orders/${order?.id}`,
-        requestOptions
-      ).then((response) => {
-        toast.success("Order deleted successfully");
-        router.push("/admin/orders");
-      });
-    });
+    try {
+      console.log("Deleting order:", order?.id);
+
+      // First, delete all order products for this order
+      // The backend endpoint /api/order-product/:id expects customerOrderId
+      // and deletes all order products for that order
+      const orderProductsResponse = await apiClient.delete(`/api/order-product/${order?.id}`);
+
+      if (!orderProductsResponse.ok) {
+        const errorData = await orderProductsResponse.json().catch(() => ({ error: "Unknown error" }));
+        console.error("Failed to delete order products:", errorData);
+        toast.error(errorData.error || "Failed to delete order products");
+        return;
+      }
+
+      console.log("Order products deleted successfully");
+
+      // Then delete the order itself
+      const orderResponse = await apiClient.delete(`/api/orders/${order?.id}`);
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json().catch(() => ({ error: "Unknown error" }));
+        console.error("Failed to delete order:", errorData);
+        toast.error(errorData.error || "Failed to delete order");
+        return;
+      }
+
+      console.log("Order deleted successfully from database");
+      toast.success("Order deleted successfully");
+      router.push("/admin/orders");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Failed to delete order. Please try again.");
+    }
   };
 
   return (

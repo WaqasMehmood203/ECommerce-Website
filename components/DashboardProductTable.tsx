@@ -21,13 +21,25 @@ const DashboardProductTable = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    apiClient.get("/api/products?mode=admin", {cache: "no-store"})
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
+    const fetchProducts = async () => {
+      try {
+        console.log('Fetching products from API...');
+        const res = await apiClient.get("/api/products?mode=admin", { cache: "no-store" });
+        console.log('Products API response status:', res.status);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch products: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('Products data received:', data);
         setProducts(data);
-      });
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   return (
@@ -96,12 +108,12 @@ const DashboardProductTable = () => {
                   </td>
 
                   <td>
-                    { product?.inStock ? (<span className="badge badge-success text-white badge-sm">
+                    {product?.inStock ? (<span className="badge badge-success text-white badge-sm">
                       In stock
                     </span>) : (<span className="badge badge-error text-white badge-sm">
                       Out of stock
-                    </span>) }
-                    
+                    </span>)}
+
                   </td>
                   <td>${product?.price}</td>
                   <th>

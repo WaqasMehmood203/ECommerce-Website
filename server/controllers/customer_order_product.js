@@ -4,7 +4,7 @@ const { asyncHandler, AppError } = require("../utills/errorHandler");
 
 const createOrderProduct = asyncHandler(async (request, response) => {
   const { customerOrderId, productId, quantity } = request.body;
-  
+
   // Validate required fields
   if (!customerOrderId) {
     throw new AppError("Customer order ID is required", 400);
@@ -87,22 +87,18 @@ const deleteProductOrder = asyncHandler(async (request, response) => {
   const { id } = request.params;
 
   if (!id) {
-    throw new AppError("Order product ID is required", 400);
+    throw new AppError("Order ID is required", 400);
   }
 
-  const existingOrder = await prisma.customer_order_product.findUnique({
-    where: { id }
-  });
-
-  if (!existingOrder) {
-    throw new AppError("Order product not found", 404);
-  }
-
-  await prisma.customer_order_product.deleteMany({
+  // This endpoint is used to delete all order products for a given order (customerOrderId)
+  // The id parameter is the customerOrderId (order ID), not individual order_product ID
+  const deletedCount = await prisma.customer_order_product.deleteMany({
     where: {
       customerOrderId: id
     }
   });
+
+  console.log(`Deleted ${deletedCount.count} order products for order: ${id}`);
   return response.status(204).send();
 });
 
@@ -121,11 +117,11 @@ const getProductOrder = asyncHandler(async (request, response) => {
       product: true
     }
   });
-  
+
   if (!order || order.length === 0) {
     throw new AppError("Order not found", 404);
   }
-  
+
   return response.status(200).json(order);
 });
 
@@ -188,10 +184,10 @@ const getAllProductOrders = asyncHandler(async (request, response) => {
   return response.json(groupedOrders);
 });
 
-module.exports = { 
-  createOrderProduct, 
-  updateProductOrder, 
-  deleteProductOrder, 
+module.exports = {
+  createOrderProduct,
+  updateProductOrder,
+  deleteProductOrder,
   getProductOrder,
   getAllProductOrders
 };

@@ -10,13 +10,25 @@ const DashboardUsers = () => {
 
   useEffect(() => {
     // sending API request for all users
-    apiClient.get("/api/users")
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
+    const fetchUsers = async () => {
+      try {
+        console.log('Fetching users from API...');
+        const res = await apiClient.get("/api/users");
+        console.log('Users API response status:', res.status);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch users: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('Users data received:', data);
         setUsers(data);
-      });
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
   return (

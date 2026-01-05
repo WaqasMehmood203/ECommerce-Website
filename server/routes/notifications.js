@@ -10,11 +10,11 @@ const {
   getUnreadCount
 } = require('../controllers/notificationController');
 
-// GET /api/notifications/:userId/unread-count - Get unread notification count
-router.get('/:userId/unread-count', getUnreadCount);
+// GET /api/notifications/user/:userId/unread-count - Get unread notification count
+router.get('/user/:userId/unread-count', getUnreadCount);
 
-// GET /api/notifications/:userId - Get user notifications with filtering and pagination
-router.get('/:userId', getUserNotifications);
+// GET /api/notifications/user/:userId - Get user notifications with filtering and pagination
+router.get('/user/:userId', getUserNotifications);
 
 // POST /api/notifications - Create new notification
 router.post('/', createNotification);

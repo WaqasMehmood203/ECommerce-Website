@@ -14,18 +14,18 @@ const userRouter = require("./routes/users");
 const orderRouter = require("./routes/customer_orders");
 const slugRouter = require("./routes/slugs");
 const orderProductRouter = require('./routes/customer_order_product');
-// const wishlistRouter = require('./routes/wishlist');
+const wishlistRouter = require('./routes/wishlist');
 const notificationsRouter = require('./routes/notifications');
 const merchantRouter = require('./routes/merchant'); // Add this line
 const bulkUploadRouter = require('./routes/bulkUpload');
 var cors = require("cors");
 
 // Import logging middleware
-const { 
-  addRequestId, 
-  requestLogger, 
-  errorLogger, 
-  securityLogger 
+const {
+  addRequestId,
+  requestLogger,
+  errorLogger,
+  securityLogger
 } = require('./middleware/requestLogger');
 
 // Import rate limiting middleware
@@ -73,17 +73,17 @@ const corsOptions = {
   origin: function (origin, callback) {
 
     if (!origin) return callback(null, true);
-    
+
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
 
     if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost:')) {
       return callback(null, true);
     }
-    
+
     // Reject other origins
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
@@ -127,15 +127,15 @@ app.use("/api/search", searchRouter);
 app.use("/api/orders", orderRouter);
 app.use('/api/order-product', orderProductRouter);
 app.use("/api/slugs", slugRouter);
-// app.use("/api/wishlist", wishlistRouter);
+app.use("/api/wishlist", wishlistRouter);
 app.use("/api/notifications", notificationsRouter);
-app.use("/api/merchants", merchantRouter); 
+app.use("/api/merchants", merchantRouter);
 app.use("/api/bulk-upload", bulkUploadRouter);
 
 // Health check endpoint (no rate limiting)
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     rateLimiting: 'enabled',
     requestId: req.reqId

@@ -14,6 +14,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import Link from "next/link";
 import { sanitize } from "@/lib/sanitize";
+import FavoriteButton from "./FavoriteButton";
 
 const ProductItem = ({
   product,
@@ -58,6 +59,11 @@ const ProductItem = ({
                 Sale
               </span>
             )}
+          </div>
+
+          {/* Favorite Button */}
+          <div className="absolute top-3 left-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <FavoriteButton productId={product.id} />
           </div>
         </div>
       </Link>

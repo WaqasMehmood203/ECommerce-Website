@@ -31,6 +31,8 @@ const AddNewProduct = () => {
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   const addProduct = async () => {
     if (
       !product.merchantId ||
@@ -84,7 +86,7 @@ const AddNewProduct = () => {
       const data: Merchant[] = await res.json();
       setMerchants(data || []);
       setProduct((prev) => ({
-      ...prev,
+        ...prev,
         merchantId: prev.merchantId || data?.[0]?.id || "",
       }));
     } catch (e) {
@@ -92,23 +94,39 @@ const AddNewProduct = () => {
     }
   };
 
-  const uploadFile = async (file: any) => {
+  const uploadFile = async (file: File): Promise<boolean> => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
 
+    setIsUploadingImage(true);
+
     try {
-      const response = await apiClient.post("/api/main-image", {
+      // Use direct fetch instead of apiClient to properly handle FormData
+      // apiClient adds 'Content-Type: application/json' which breaks file uploads
+      const response = await fetch("http://localhost:3001/api/main-image", {
         method: "POST",
         body: formData,
+        // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("File uploaded successfully:", data);
+        toast.success("Image uploaded successfully");
+        setIsUploadingImage(false);
+        return true;
       } else {
-        console.error("File upload unsuccessfull");
+        console.error("File upload unsuccessful:", data);
+        toast.error(data.message || "File upload unsuccessful");
+        setIsUploadingImage(false);
+        return false;
       }
     } catch (error) {
-      console.error("Error happend while sending request:", error);
+      console.error("Error happened while sending request:", error);
+      toast.error("Error uploading image");
+      setIsUploadingImage(false);
+      return false;
     }
   };
 
@@ -275,19 +293,35 @@ const AddNewProduct = () => {
           </label>
         </div>
         <div>
-          <input
-            type="file"
-            className="file-input file-input-bordered file-input-lg w-full max-w-sm"
-            onChange={(e: any) => {
-              uploadFile(e.target.files[0]);
-              setProduct({ ...product, mainImage: e.target.files[0].name });
-            }}
-          />
-          {product?.mainImage && (
+          <label className="form-control w-full max-w-xs">
+            <div className="label">
+              <span className="label-text">Product Image:</span>
+            </div>
+            <input
+              type="file"
+              className="file-input file-input-bordered file-input-lg w-full max-w-sm"
+              disabled={isUploadingImage}
+              onChange={async (e: any) => {
+                const selectedFile = e.target.files[0];
+                if (selectedFile) {
+                  const uploadSuccess = await uploadFile(selectedFile);
+                  if (uploadSuccess) {
+                    setProduct({ ...product, mainImage: selectedFile.name });
+                  }
+                }
+              }}
+            />
+            {isUploadingImage && (
+              <span className="text-sm text-blue-600 mt-2">
+                Uploading image...
+              </span>
+            )}
+          </label>
+          {product?.mainImage && !isUploadingImage && (
             <Image
               src={`/` + product?.mainImage}
               alt={product?.title}
-              className="w-auto h-auto"
+              className="w-auto h-auto mt-2"
               width={100}
               height={100}
             />

@@ -19,10 +19,25 @@ const AdminOrders = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const response = await apiClient.get("/api/orders");
-      const data = await response.json();
-      
-      setOrders(data?.orders);
+      try {
+        console.log('Fetching orders from API...');
+        const response = await apiClient.get("/api/orders");
+        console.log('Orders API response status:', response.status);
+
+        if (!response.ok) {
+          console.error('Orders API error:', response.status, response.statusText);
+          throw new Error(`Failed to fetch orders: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Orders data received:', data);
+
+        // Handle pagination response format
+        setOrders(data?.orders || []);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrders([]);
+      }
     };
     fetchOrders();
   }, []);
@@ -84,7 +99,7 @@ const AdminOrders = () => {
                     <p>${order?.total}</p>
                   </td>
 
-                  <td>{ new Date(Date.parse(order?.dateTime)).toDateString() }</td>
+                  <td>{new Date(Date.parse(order?.dateTime)).toDateString()}</td>
                   <th>
                     <Link
                       href={`/admin/orders/${order?.id}`}

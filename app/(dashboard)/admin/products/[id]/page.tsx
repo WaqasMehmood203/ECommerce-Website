@@ -22,6 +22,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   const [product, setProduct] = useState<Product>();
   const [categories, setCategories] = useState<Category[]>();
   const [otherImages, setOtherImages] = useState<OtherImages[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const router = useRouter();
 
   // functionality for deleting product
@@ -82,24 +83,39 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   };
 
   // functionality for uploading main image file
-  const uploadFile = async (file: any) => {
+  const uploadFile = async (file: File): Promise<boolean> => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
 
+    setIsUploadingImage(true);
+
     try {
-      const response = await apiClient.post("/api/main-image", {
+      // Use direct fetch instead of apiClient to properly handle FormData
+      // apiClient adds 'Content-Type: application/json' which breaks file uploads
+      const response = await fetch("http://localhost:3001/api/main-image", {
         method: "POST",
         body: formData,
+        // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success("Image uploaded successfully");
+        console.log("File uploaded successfully:", data);
+        setIsUploadingImage(false);
+        return true;
       } else {
-        toast.error("File upload unsuccessful.");
+        toast.error(data.message || "File upload unsuccessful");
+        console.error("File upload unsuccessful:", data);
+        setIsUploadingImage(false);
+        return false;
       }
     } catch (error) {
       console.error("There was an error while during request sending:", error);
-      toast.error("There was an error during request sending");
+      toast.error("Error uploading image");
+      setIsUploadingImage(false);
+      return false;
     }
   };
 
@@ -144,7 +160,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
       <div className="flex flex-col gap-y-7 xl:ml-5 w-full max-xl:px-5">
         <h1 className="text-3xl font-semibold">Product details</h1>
         {/* Product name input div - start */}
-        
+
         <div>
           <label className="form-control w-full max-w-xs">
             <div className="label">
