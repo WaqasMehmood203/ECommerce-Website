@@ -7,7 +7,6 @@ import SessionProvider from "@/utils/SessionProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/Providers";
-import SessionTimeoutWrapper from "@/components/SessionTimeoutWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 const poppins = Poppins({
@@ -31,7 +30,6 @@ export default async function RootLayout({
     <html lang="en" data-theme="light">
       <body className={`${inter.className} ${poppins.variable}`}>
         <SessionProvider session={session}>
-          <SessionTimeoutWrapper />
           <Header />
           <Providers>
             {children}

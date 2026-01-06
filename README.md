@@ -1,5 +1,6 @@
 **🛒 UniCart – Full Stack Ecommerce Application
-**UniCart is a full-stack ecommerce web application built using Next.js for the frontend and Node.js (Express) for the backend.
+**
+UniCart is a full-stack ecommerce web application built using Next.js for the frontend and Node.js (Express) for the backend.
 It supports product management, bulk uploads, search, wishlist (favourites), cart, orders, notifications, and admin management.
 
 🚀 Features
